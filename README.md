@@ -11,7 +11,7 @@ This system acts as a "super-analyst" for professional cricket traders. Every 5 
 1. **Analyzes On-Field Performance**: Tracks ball-by-ball action including Dot Ball %, Boundary %, Partnership Runs, and Run Rate.
 2. **Monitors Betting Odds**: Captures real-time odds movements from bookmakers.
 3. **Gauges Fan Sentiment**: Processes thousands of Reddit comments using VADER sentiment analysis to detect crowd psychology.
-4. **Generates Trading Signals**: Uses Google Gemini AI to synthesize all three data sources and produce a "Trader Sentiment" verdict (Bullish/Bearish/Neutral) for each team.
+4. **Generates Trading Signals**: Uses Google Gemini 2.5 Flash to synthesize all three data sources and produce a "Trader Sentiment" verdict (Bullish/Bearish/Neutral) for each team.
 
 The AI is **context-aware**, meaning it remembers the narrative arc of the match and can detect momentum shifts, trend reversals, and divergences between odds and sentiment.
 
@@ -19,7 +19,7 @@ The AI is **context-aware**, meaning it remembers the narrative arc of the match
 
 ## Key Features
 
-- **Hybrid NLP Pipeline**: Local VADER for quantitative scoring + Gemini 2.5 Flash for qualitative context analysis
+- **Hybrid NLP Pipeline**: Local VADER for quantitative scoring + Gemini for qualitative context analysis
 - **Advanced Cricket Metrics**: Dot Ball %, Boundary %, Partnership Runs, Run Rate
 - **Context-Aware Analysis**: Tracks match history to identify momentum shifts and sentiment reversals
 - **Real-Time Processing**: Designed for low-latency signals during live matches
@@ -92,9 +92,39 @@ ipl-sentiment-betting/
 │   ├── sportmonks/                # Sportmonks API scripts
 │   ├── the_odds_api/              # The Odds API scripts
 │   └── reddit/                    # Reddit scraping
+├── examples/                      # Sample analysis outputs
+│   └── 74.md                      # IPL 2024 Final analysis
 ├── tests/                         # Unit tests
 ├── pyproject.toml                 # Project metadata & dependencies
 └── README.md                      # This file
+```
+
+---
+
+## Example Output
+
+A complete sample analysis of the IPL 2024 Final (Match 74: SRH vs KKR) is available in [`examples/74.md`](examples/74.md). This demonstrates:
+
+- Real-time interval-by-interval analysis across 38 chunks
+- Context-aware sentiment tracking showing momentum shifts
+- Odds movements correlated with on-field performance
+- AI-generated trader sentiment verdicts (Bullish/Bearish/Neutral)
+
+**Sample Interval:**
+```markdown
+## Interval: chunk_4
+
+### Ball-by-Ball Summary
+Sunrisers Hyderabad: 3 runs from 6 balls (RR: 3.00). Wickets: 1.
+WICKET at 0.5! Abhishek Sharma out b Mitchell Starc.
+
+### Odds Summary
+Latest odds: Kolkata Knight Riders: 1.83, Sunrisers Hyderabad: 2.0
+
+### AI-Generated Analysis
+**Trader Sentiment:**
+- Sunrisers Hyderabad: **Bearish**. Terrible start with early wicket.
+- Kolkata Knight Riders: **Bullish**. Excellent bowling execution.
 ```
 
 ---
@@ -121,36 +151,12 @@ The `ipl-analyze` command processes a match JSON file:
    - Run Rate, Wickets
    - Dot Ball %, Boundary %, Partnership Runs
 
-3. **LLM Synthesis**: Feeds all data to Gemini AI with:
+3. **LLM Synthesis**: Feeds all data to Gemini with:
    - Match Narrative History (last 3 intervals)
    - Current interval data (odds, sentiment, cricket metrics)
    - Instructions to identify divergences and provide Trader Sentiment
 
 4. **Output**: Generates a Markdown report with interval-by-interval breakdowns.
-
----
-
-## Example Output
-
-```markdown
-## Interval: chunk_2
-
-### Ball-by-Ball Summary
-Summary for Chennai Super Kings: 42 runs from 30 balls (RR: 8.40). Wickets: 1.
-Metrics: Dot Ball %: 23.3%, Boundary %: 26.7%, Partnership Runs (this interval): 28.
-
-### Odds Summary
-Latest odds (2024-03-22 08:00:13 PM IST): Chennai Super Kings: 1.77, Royal Challengers Bangalore: 2.0
-
-### AI-Generated Analysis
-**Match Interval Report: Royal Challengers Bengaluru vs Chennai Super Kings**
-
-This interval shows CSK maintaining strong favoritism (1.77 odds) with solid on-field performance (8.40 RR, 26.7% boundaries). Fan sentiment remains marginally positive at 0.06. Compared to the previous interval, CSK's odds lengthened slightly from 1.75 to 1.77, while RCB shortened from 2.1 to 2.0, indicating a negligible market adjustment. The sentiment-odds alignment is weak, as fan comments remain detached from match dynamics.
-
-**Trader Sentiment:**
-- Chennai Super Kings: **Bullish** (Strong value odds, solid metrics)
-- Royal Challengers Bangalore: **Bearish** (Underdog status persists)
-```
 
 ---
 
@@ -161,7 +167,7 @@ This project would not have been possible without:
 - [Sportmonks](https://www.sportmonks.com/) — Ball-by-ball match data
 - [Reddit](https://www.reddit.com) — Fan sentiment via comments
 
-Thank you to these platforms for their support.
+Thank you to these platforms for their support ❤️
 
 ---
 
@@ -173,4 +179,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
-This is a personal portfolio project, but suggestions and improvements are welcome! Feel free to open an issue or submit a pull request.
+This is a personal portfolio project, but suggestions and improvements are welcome! Feel free to submit a pull request and built upon the idea.
