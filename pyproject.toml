@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ipl_sentiment_betting"
+version = "0.1.0"
+description = "IPL Sentiment Trading Analysis Tool"
+authors = [
+  { name = "Darshan", email = "darshan@example.com" },
+]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pandas>=2.2.2",
+    "openpyxl>=3.1.5",
+    "tqdm>=4.66.4",
+    "praw>=7.7.1",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
+    "nbformat>=5.10.4",
+    "nltk>=3.8.1",
+    "accelerate>=0.31.0",
+    "psutil>=6.0.0",
+    "google-generativeai>=0.7.1",
+]
+
+[project.scripts]
+ipl-analyze = "ipl_sentiment_betting.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
