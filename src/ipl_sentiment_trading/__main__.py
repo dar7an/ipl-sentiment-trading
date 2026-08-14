@@ -1,5 +1,3 @@
-"""Shim: old CLI entry routes to the paper book."""
-
 from ipl_sentiment_trading.cli import main
 
 if __name__ == "__main__":

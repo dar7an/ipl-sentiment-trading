@@ -3,42 +3,46 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ipl_sentiment_betting"
-version = "0.1.0"
-description = "IPL Sentiment Trading Analysis Tool"
-authors = [
-  { name = "Darshan", email = "darshan@example.com" },
-]
+name = "ipl-sentiment-trading"
+version = "0.2.0"
+description = "Match-interval paper book for IPL 2024: de-vigged odds, team sentiment, cricket state, and path-dependent PnL."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Darshan" },
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pandas>=2.2.2",
-    "openpyxl>=3.1.5",
-    "tqdm>=4.66.4",
-    "praw>=7.7.1",
-    "python-dotenv>=1.0.1",
-    "requests>=2.32.3",
-    "nbformat>=5.10.4",
-    "nltk>=3.8.1",
-    "accelerate>=0.31.0",
-    "psutil>=6.0.0",
-    "google-generativeai>=0.7.1",
+  "pydantic>=2.7",
+  "python-dotenv>=1.0",
+  "nltk>=3.8",
+  "pandas>=2.2",
+  "streamlit>=1.36",
+  "plotly>=5.22",
+  "google-genai>=1.0",
+  "httpx>=0.27",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [project.scripts]
-ipl-analyze = "ipl_sentiment_betting.main:main"
+ipl-analyze = "ipl_sentiment_trading.cli:main"
+ipl-ui = "ipl_sentiment_trading.cli:ui_main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q"
-testpaths = [
-    "tests",
-]
+minversion = "8.0"
+addopts = "-ra"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]

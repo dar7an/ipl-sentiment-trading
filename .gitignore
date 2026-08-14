@@ -7,19 +7,26 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+src/*.egg-info/
 
 # Dependencies
 .venv/
 venv/
 env/
-*.egg-info/
-src/*.egg-info/
 
 # Output files
 *.xlsx
 *.csv
+analysis-*.json
+analysis-*.md
 
 # IDE and OS files
 .idea/
 .vscode/
 .DS_Store
+
+# Streamlit
+.streamlit/secrets.toml
