@@ -79,8 +79,8 @@ proposal. **Zero fills, flat book, and the trace shows exactly why.** That is
 the point: the guardrail is a decision model, so its "no" is a calibrated
 probability you can inspect, not a threshold you can't.
 
-A/B vs. the VADER baseline (`ipl-analyze eval 74`): sign agreement 45%,
-rank correlation 0.13 — Jev is far more discriminating about what a comment is
+A/B vs. the VADER baseline (`ipl-analyze eval 74`): sign agreement 45–53%
+across runs (Jev is nondeterministic), rank correlation ~0.1 — Jev is far more discriminating about what a comment is
 actually saying (its mean per-interval sentiment gap was +0.9 pts vs. VADER's
 −7.6 pts, matching the KKR-dominant crowd). Brier on this match: view 0.045 vs
 market 0.040 — the sentiment overlay added noise on a game the market already
@@ -98,7 +98,7 @@ Python 3.11+.
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/pytest                                  # 36 tests, fully offline
 .venv/bin/ipl-analyze list                        # corpus matches
-.venv/bin/ipl-analyze analyze 74 --sentiment vader # offline baseline, no keys
+.venv/bin/ipl-analyze analyze 74 --sentiment vader # offline sentiment; the Jev gate still fires if TYPESAFE_API_KEY is set
 
 export TYPESAFE_API_KEY=...   # Jev (or JEV_API_KEY for the metered proxy)
 .venv/bin/ipl-analyze analyze 74 --sentiment jev --decisions-jsonl trace.jsonl

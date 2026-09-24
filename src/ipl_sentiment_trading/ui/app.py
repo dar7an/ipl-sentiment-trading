@@ -101,7 +101,10 @@ def _catalog() -> list[dict]:
         try:
             path = Path("data/chunks") / f"{mid}.json"
             info = json.loads(path.read_text()).get("match_info", {})
-            a, b = info.get("team1", "?"), info.get("team2", "?")
+            def _team(v):
+                return v.get("name", "?") if isinstance(v, dict) else str(v)
+
+            a, b = _team(info.get("team1", "?")), _team(info.get("team2", "?"))
             rows.append({"match_id": mid, "label": f"{mid} · {a} vs {b}"})
         except (OSError, ValueError, KeyError):
             rows.append({"match_id": mid, "label": str(mid)})
@@ -115,7 +118,9 @@ def _analyze(match_id: int, bankroll: float, sentiment: str, use_trace: bool) ->
     if use_trace:
         from ipl_sentiment_trading.jev.client import open_traced_client
 
-        tracer_path = Path(tempfile.gettempdir()) / f"jev_trace_{match_id}.jsonl"
+        fd, raw_path = tempfile.mkstemp(prefix=f"jev_trace_{match_id}_", suffix=".jsonl")
+        os.close(fd)
+        tracer_path = Path(raw_path)
         client = open_traced_client(trace_path=tracer_path)
         decide = client.decide
     result = analyze_match(
@@ -244,7 +249,7 @@ def _jev_panel(result: dict, cursor: int) -> None:
                 "i": i + 1,
                 "questions": e.get("n_questions", len(e.get("questions") or {})),
                 "cache": "hit" if e.get("cache_hit") else "api",
-                "tokens": (e.get("usage") or {}).get("input_tokens", 0),
+                "tokens": e.get("input_tokens", 0),
                 "ms": round(e.get("latency_ms") or 0),
             }
             for i, e in enumerate(trace)
