@@ -3,7 +3,11 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 
-from ipl_sentiment_trading.corpus.teams import SHORT_ALIASES, TEAM_NICKNAMES, canonicalize_team
+from ipl_sentiment_trading.corpus.teams import (
+    SHORT_ALIASES,
+    TEAM_NICKNAMES,
+    canonicalize_team,
+)
 
 _WORD = re.compile(r"[a-z0-9']+")
 

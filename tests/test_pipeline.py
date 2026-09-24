@@ -52,7 +52,6 @@ def test_analyze_match_74_with_fake_jev():
 
 def test_no_lookahead_in_live_features():
     res = analyze_match(74, sentiment="none")
-    winner = (res.winner or "").lower()
     for iv in res.intervals:
         for key, value in iv.live_features.items():
             assert not any(t in key.lower() for t in FORBIDDEN_FEATURE_SUBSTR)

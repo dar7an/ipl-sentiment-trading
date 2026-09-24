@@ -37,7 +37,6 @@ def _fake_decide(approved=True):
     def decide(state, questions):
         calls.append((state, questions))
         answers = {}
-        n = sum(1 for q in questions if q.startswith("c") and q.endswith("_relevant"))
         answers["c0_relevant"] = NoulA(type="noul", noul=0.95)
         answers["c0_team"] = ChoiceA(
             type="choice", choice="team_b", confidence=0.8,

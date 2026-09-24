@@ -93,7 +93,7 @@ class JevSentimentEngine:
         answers = result.answers
 
         verdicts: list[CommentVerdict] = []
-        by_index = {orig_i: c for orig_i, c in selected}
+        by_index = dict(selected)
         for pos, (orig_i, _c) in enumerate(selected):
             rel_a = answers.get(f"c{pos}_relevant")
             team_a_ = answers.get(f"c{pos}_team")

@@ -60,10 +60,10 @@ def compute_view(
     p_sent_a = sigmoid(log_prior + shift)
     p_view_a = sigmoid(log_prior + alpha * shift)
     edge_a = p_view_a - p_market_a
-    base = dict(
-        p_market_a=p_market_a, p_sent_a=p_sent_a, p_view_a=p_view_a,
-        edge_a=edge_a, alpha=alpha,
-    )
+    base = {
+        "p_market_a": p_market_a, "p_sent_a": p_sent_a, "p_view_a": p_view_a,
+        "edge_a": edge_a, "alpha": alpha,
+    }
     if abs(edge_a) < params.edge_threshold:
         return Signal(**base, reason="edge-below-threshold")  # type: ignore[arg-type]
     return Signal(**base, side=team_a if edge_a > 0 else team_b, reason="ok")  # type: ignore[arg-type]

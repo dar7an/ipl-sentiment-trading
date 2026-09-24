@@ -37,8 +37,10 @@ def comments_state(comments: list[Comment], team_a: TeamRef, team_b: TeamRef) ->
     """Numbered candidate comments for one interval — the `state` for
     `comment_questions`. Indices must match the candidates' positions."""
     lines = [
-        f"Reddit match-thread comments, {team_a.name} ({team_a.abbreviation}) "
-        f"vs {team_b.name} ({team_b.abbreviation}), IPL 2024.",
+        (
+            f"Reddit match-thread comments, {team_a.name} ({team_a.abbreviation}) "
+            f"vs {team_b.name} ({team_b.abbreviation}), IPL 2024."
+        ),
         "Comments are numbered [i] chronologically within a short window:",
     ]
     for i, c in enumerate(comments):

@@ -1,82 +1,135 @@
-# IPL 2024 paper book
+# ipl-sentiment-trading — a Jev showcase
 
-Offline research demo: for each frozen 5-minute-ish interval of an IPL 2024 match, the app builds cricket state, de-vigged FanDuel probabilities, team-attributed Reddit sentiment, and a path-dependent paper ledger.
+A replayed IPL 2024 paper book driven end-to-end by **Jev**, TypeSafe's System
+One decision model. Every fuzzy judgment a trading pipeline needs — reading a
+crowd, grading a signal, vetoing a bet, deciding what to say and how to say it —
+is a typed Jev decision (`choice` / `score` / `noul`) over a shared `state`,
+recorded in an auditable trace. All arithmetic — odds de-vigging, the log-odds
+view model, Kelly sizing, mark-to-market, settlement — is deterministic Python.
 
-It is **not** live betting, not a broker, and not a Gemini narrator. The 2024 JSON dumps are the product. Optional LLM prose is a sidecar.
+The original thesis is preserved: Reddit match-thread sentiment vs. FanDuel
+implied probability, over the 2024 season's frozen 5-minute chunks. What's new
+is *who makes the judgments* — Jev, not regexes — and that every judgment is
+inspectable in `decisions.jsonl`.
 
-The previous class project lived in `examples/74.md` as Gemini paragraphs. That file is an artifact, not the current output.
+## Why Jev (and where it fits)
 
-## Install
+Jev is a small decision model: you post a `state` string plus a map of typed
+`questions`, and it answers all of them in one call with calibrated
+probabilities (`noul` for booleans, `choice`+`probabilities` for categoricals,
+`score`+`probabilities` for rankings). Three properties shaped this design:
 
-Python 3.11+ (developed on 3.14). `pyproject.toml` is the only pin file.
+1. **Questions share the state prefix.** 94 judgments about one interval cost
+   ~10k input tokens *once*, not 94 times — so the design batches *every*
+   per-comment question of an interval into a single `decide` call.
+2. **It's fast and cheap** — measured p50 ≈ 100 ms, ~10k tokens/call (≈ $0.01
+   at $1/Mtok) — so a per-interval event loop calling it ~2× per interval is
+   practical, and every call can be traced.
+3. **It doesn't do arithmetic.** Win probabilities, Kelly stakes, de-vig —
+   numbers come from deterministic code; Jev only decides things that are
+   genuinely judgment.
 
-```bash
-uv sync --extra dev
-# or: python -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"
+## The Jev usage map
+
+| # | Decision point | Question type | State | Purpose |
+|---|----------------|---------------|-------|---------|
+| 1 | `comment_questions` per interval | 3 × per candidate comment (`noul` relevant, `choice` team_a/team_b/neutral, `score` bullishness 0–5) | Comments + cricket + market context | Replaces the lexicon: typed, calibrated sentiment attributed to teams |
+| 2 | `interval_questions` | `choice` regime, `score` quality, `noul` odds-stale, `noul` narrate | Same state | Interval-level verdicts that gate downstream steps |
+| 3 | `trade_gate_question` | `noul` (is the edge genuine?) | Proposal prose: side, decimal, edge, sizes, cricket state | Last-line guardrail before every paper fill |
+| 4 | `route_question` | `score` drama 1–5 | Compact interval card | Routes narration between `gemma-4-26b-a4b-it` and `gemma-4-31b-it` |
+| 5 | `compaction_questions` | `noul` keep per fact | Narrator memory | Trims the narrator's context when it outgrows budget |
+
+Plus the plumbing: `DecideClient` (official `api.typesafe.ai/v1/systemone`
+or the metered proxy, retries + JSONL cache), `JsonlTracer` (one trace row per
+call), and `JevSentimentEngine` (the big batched call).
+
+## Pipeline
+
+```
+match chunk → CricketTracker (balls, wickets, windows)
+            → quote_as_of (de-vigged FanDuel; carry-forward staleness flag)
+            → JevSentimentEngine (one decide call: N×3 comment + 4 interval questions)
+            → compute_view (deterministic log-odds + shrinkage; needs ≥3 comments/team,
+              |edge| ≥ 3%, effective volume ≥ 20)
+            → propose_fill (Kelly stake caps, exposure cap, then the Jev gate)
+            → PaperBook (mark / settle)
+            → GemmaNarrator (if verdict says narrate; Jev routes the model)
 ```
 
-First sentiment run downloads NLTK's VADER lexicon.
+`live_features` per interval carry everything needed to learn offline; a
+lookahead guard refuses any feature derived from `forecast_data`, `winner`, or
+`note` fields.
 
-Copy `.env.example` only if you want the narrative sidecar. The CLI and UI run with no env file.
+## Measured on the IPL 2024 final (match 74, SRH vs KKR)
 
-## Run
+From `ipl-analyze analyze 74 --sentiment jev --narrative --decisions-jsonl`:
 
-```bash
-# paper book for the final (match 74), no API key
-uv run python -m ipl_sentiment_trading analyze 74
-uv run python -m ipl_sentiment_trading analyze 74 -o analysis-74.json
-uv run python -m ipl_sentiment_trading analyze 74 -o analysis-74.md --format md
+| Metric | Value |
+|--------|-------|
+| decide calls | 82 (81 API + 1 cache hit) |
+| typed questions answered | 3,648 |
+| input tokens / est. cost | 401,903 / ≈ $0.40 @ $1/Mtok |
+| latency p50 / p95 | 98 ms / 155 ms |
+| Jev gate vetoes | 3 of 3 proposed fills (all below the 0.5 bar: 0.40, 0.39, 0.45) |
+| intervals narrated by Gemma | 30 of 38 |
 
-uv run python -m ipl_sentiment_trading list
+Match 74 was a KKR blowout, priced correctly. Jev's read of the crowd agreed —
+it attributed almost everything to KKR and vetoed every marginal SRH-lean
+proposal. **Zero fills, flat book, and the trace shows exactly why.** That is
+the point: the guardrail is a decision model, so its "no" is a calibrated
+probability you can inspect, not a threshold you can't.
 
-# UI
-uv run ipl-ui
-# or: uv run streamlit run src/ipl_sentiment_trading/ui/app.py
-```
+A/B vs. the VADER baseline (`ipl-analyze eval 74`): sign agreement 45%,
+rank correlation 0.13 — Jev is far more discriminating about what a comment is
+actually saying (its mean per-interval sentiment gap was +0.9 pts vs. VADER's
+−7.6 pts, matching the KKR-dominant crowd). Brier on this match: view 0.045 vs
+market 0.040 — the sentiment overlay added noise on a game the market already
+had right; the corpus covers more than one match.
 
-Legacy: `ipl-analyze 74 out.md` still works and now writes the paper book, not Gemini copy.
+Sample Gemma narration (routed): *"Sunrisers Hyderabad's collapse intensifies
+as the seventh wicket falls, leaving them entirely at KKR's mercy in this
+one-sided final."*
 
-## What the numbers are
+## Quickstart
 
-**Odds.** `p_raw = 1/decimal`. Overround = `sum(p_raw) - 1`. Fair `p* = p_raw / sum(p_raw)` (proportional de-vig — juice scaled off both sides equally; not Shin). Each interval uses the last snapshot with `last_update` ≤ interval end, including carry-forward when later chunks have no prints. Decimal **1.01 is not implied 1.00**.
-
-**Sentiment.** VADER plus a cricket lexicon (six, golden duck, wicket maiden, …). Comments are attributed to a team via names, abbreviations, nicknames, and players seen so far. Interval signal is two team means + volumes, not one match blob.
-
-**View and stake.** Market `p*` is the prior. Sentiment is log-odds evidence: `logit(p_view) = logit(p*) + α · 1.5 · tanh(s_a − s_b)`, `α = n / (n + 40)`. Mixing `p*` with a 50/50-centered tanh would call every longshot a 3%+ edge; this update does not. Bet only if `|p_view − p*| ≥ 3%` and attributed volume ≥ 20 with at least 3 comments per team. Back the favored side at as-of-t decimal odds. Stake is `min(0.25 Kelly, 5% of equity)`, cash-capped. Same-side fills are not pyramided; exposure is capped at 15% of starting bankroll. **Fees and slippage are 0.**
-
-**Marks.** Open fills mark to current `p*`: value = `stake × p*_side × decimal_fill`. Remaining positions settle on the frozen winner **after** the last interval's live decision. Live features never include the winner, `forecast_data`, or prior LLM text.
-
-**Cricket.** Legal balls exclude wides and no-balls. Dot % includes wicket balls with 0 runs. Partnerships persist across intervals until a wicket. RR is 0 when legal balls = 0. `boundary_ball_pct` is ball frequency; `boundary_run_share` is run share. Innings changes use batting-team switches and `is_innings_break`, not `ball == 6.0`. Ball clocks are Sportmonks `updated_at`.
-
-## Corpus caveats
-
-- Frozen IPL 2024. Do not re-scrape. Do not rewrite `data/chunks`, `data/balls`, or `data/odds`.
-- 71 matches. **63, 66, 70 are missing.**
-- Playing XI is empty on every match — the UI omits it.
-- Odds dumps say “Royal Challengers Bangalore”; chunks say “Bengaluru”. Names are normalized.
-- `archive/data_collection/` is dead scraping code with a different chunk schema. Not runtime.
-
-## Narrative sidecar (optional)
-
-Off unless `--narrative` / UI toggle **and** credentials:
+Python 3.11+.
 
 ```bash
-export GEMINI_API_KEY=...          # or GOOGLE_API_KEY
-export NARRATIVE_MODEL=gemini-3.5-flash-lite
-uv run python -m ipl_sentiment_trading analyze 74 --narrative
+python -m venv .venv && .venv/bin/pip install -e ".[dev]"
+.venv/bin/pytest                                  # 36 tests, fully offline
+.venv/bin/ipl-analyze list                        # corpus matches
+.venv/bin/ipl-analyze analyze 74 --sentiment vader # offline baseline, no keys
+
+export TYPESAFE_API_KEY=...   # Jev (or JEV_API_KEY for the metered proxy)
+.venv/bin/ipl-analyze analyze 74 --sentiment jev --decisions-jsonl trace.jsonl
+
+export GEMINI_API_KEY=...     # Gemma 4 narrator
+.venv/bin/ipl-analyze analyze 74 --sentiment jev --narrative
+.venv/bin/ipl-analyze eval 74 --sentiment jev --trace trace.jsonl  # A/B + cost + Brier
+.venv/bin/ipl-ui              # Streamlit dashboard (Jev decisions panel included)
 ```
 
-Local Gemma 4 (or any OpenAI-compatible chat endpoint) — no GPU required in this repo:
+`.env.example` documents every key. With no keys, everything still runs — the
+sentiment engine falls back to VADER and the narrator is skipped.
 
-```bash
-export NARRATIVE_BASE_URL=http://127.0.0.1:8080/v1
-export NARRATIVE_MODEL=gemma-4-26b-it   # whatever your server expects
+## Layout
+
+```
+src/ipl_sentiment_trading/
+  corpus/    match/balls/odds/comments loading, teams, venues, timeutils
+  cricket/   legal scoring rules + CricketTracker (innings state, windows)
+  market/    de-vig, quotes, carry-forward staleness
+  sentiment/ VADER baseline, candidate sampling, JevSentimentEngine, aggregation
+  signal/    log-odds view + effective-volume shrinkage
+  policy/    proposal construction + Jev trade gate
+  ledger/    path-dependent paper book (fills, MTM, settlement, drawdown)
+  narrate/   Gemma 4 narrator w/ Jev drama routing + memory compaction
+  jev/       DecideClient, question builders, JSONL cache + tracer
+  pipeline/  analyze_match orchestration + leak-guarded live features
+  eval/      VADER A/B, Brier report, cost report
+  ui/        Streamlit dashboard incl. the Jev decisions panel
+data/        frozen IPL 2024 corpus (chunks, balls, odds, comments) — read-only
+ARCHITECTURE.md   design spec and the swarm's build plan
 ```
 
-Uses `google-genai`, not deprecated `google-generativeai`. Google is imported only when narrative is actually constructed.
-
-## Tests
-
-```bash
-uv run pytest
-```
+Not live betting, not a broker, not financial advice.

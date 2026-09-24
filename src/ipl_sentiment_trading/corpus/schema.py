@@ -110,7 +110,7 @@ class FrozenMatchFile(BaseModel):
     chunks: list[FrozenChunk]
 
     @model_validator(mode="after")
-    def _chunks_nonempty(self) -> "FrozenMatchFile":
+    def _chunks_nonempty(self) -> FrozenMatchFile:
         if not self.chunks:
             raise ValueError("chunks must be a non-empty list")
         return self

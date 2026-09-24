@@ -215,25 +215,98 @@ def build_parser() -> argparse.ArgumentParser:
     an.add_argument("--bankroll", type=float, default=1000.0)
     an.set_defaults(func=_cmd_analyze)
 
+    ev = sub.add_parser("eval", help="A/B + cost + Brier report for one match")
+    ev.add_argument("match", help="Match id or path to chunks JSON")
+    ev.add_argument("-o", "--output", help="Write eval JSON to this path")
+    ev.add_argument("--sentiment", choices=("auto", "jev", "vader", "none"), default="auto")
+    ev.add_argument("--sample-k", type=int, default=30)
+    ev.add_argument("--trace", type=Path, default=None,
+                    help="Where the Jev decision trace was/should be written")
+    ev.add_argument("--bankroll", type=float, default=1000.0)
+    ev.set_defaults(func=_cmd_eval)
+
     return parser
+
+
+def _cmd_eval(args: argparse.Namespace) -> int:
+    from ipl_sentiment_trading.eval.ab import compare_engines
+    from ipl_sentiment_trading.eval.report import brier_report, cost_report
+
+    data_root = args.data_dir or _data_root_from_env()
+    decide = None
+    if args.sentiment in {"auto", "jev"}:
+        from ipl_sentiment_trading.jev.client import open_traced_client
+
+        client = open_traced_client(
+            trace_path=args.trace or Path("decisions.jsonl")
+        )
+        decide = client.decide
+    try:
+        result = analyze_match(
+            args.match,
+            data_root=data_root,
+            params=TradingParams(starting_bankroll=args.bankroll),
+            sentiment=args.sentiment,
+            narrate=False,
+            sample_k=args.sample_k,
+            decide=decide,
+        )
+    except (MissingMatchError, MatchLoadError, FileNotFoundError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    payload = {
+        "match_id": result.match_id,
+        "sentiment_source": result.sentiment_source,
+        "book": {
+            "ending_equity": result.ending_equity,
+            "realized_pnl": result.realized_pnl,
+            "n_fills": result.n_fills,
+            "hit_rate": result.hit_rate,
+            "max_drawdown": result.max_drawdown,
+        },
+        "brier": brier_report(result),
+        "jev_usage": result.jev_usage,
+    }
+    if decide is not None:
+        from ipl_sentiment_trading.corpus.loader import CorpusPaths, load_match
+
+        m = load_match(args.match, root=CorpusPaths(data_root) if data_root else None)
+        payload["ab"] = compare_engines(m, decide, sample_k=args.sample_k)
+    if args.trace and Path(args.trace).exists():
+        payload["cost"] = cost_report(args.trace)
+    text = json.dumps(payload, indent=2, default=str)
+    if args.output:
+        Path(args.output).write_text(text, encoding="utf-8")
+        print(f"Wrote {args.output}")
+    else:
+        print(text)
+    return 0
+
+
+def ui_main() -> None:
+    load_dotenv()
+    from streamlit.web import cli as stcli
+
+    app = Path(__file__).resolve().parent / "ui" / "app.py"
+    sys.argv = ["streamlit", "run", str(app), *sys.argv[1:]]
+    sys.exit(stcli.main())
 
 
 def main(argv: list[str] | None = None) -> None:
     load_dotenv()
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
-    if not argv or argv[0] not in {"list", "analyze", "-h", "--help"}:
-        if argv and argv[0] not in {"-h", "--help"}:
-            if len(argv) >= 2 and not argv[0].startswith("-") and not argv[1].startswith("-"):
-                if argv[1].endswith(".md") or argv[1].endswith(".json"):
-                    argv = [
-                        "analyze", argv[0], "-o", argv[1], "--format",
-                        "md" if argv[1].endswith(".md") else "json", *argv[2:],
-                    ]
-                else:
-                    argv = ["analyze", *argv]
+    if argv and argv[0] not in {"list", "analyze", "eval", "-h", "--help"}:
+        if len(argv) >= 2 and not argv[0].startswith("-") and not argv[1].startswith("-"):
+            if argv[1].endswith(".md") or argv[1].endswith(".json"):
+                argv = [
+                    "analyze", argv[0], "-o", argv[1], "--format",
+                    "md" if argv[1].endswith(".md") else "json", *argv[2:],
+                ]
             else:
                 argv = ["analyze", *argv]
+        else:
+            argv = ["analyze", *argv]
     args = parser.parse_args(argv)
     if not hasattr(args, "func"):
         parser.print_help()

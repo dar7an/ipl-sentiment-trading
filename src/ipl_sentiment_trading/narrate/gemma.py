@@ -153,7 +153,7 @@ class GemmaNarrator:
                 model=route.model, contents=prompt
             )
             text = (resp.text or "").strip()
-        except Exception:
+        except Exception:  # noqa: BLE001 — narration is best-effort; any SDK/transport failure just skips the interval
             return None
         if text:
             fact = f"{features.get('overs')} ov inn{features.get('innings')}: {text}"

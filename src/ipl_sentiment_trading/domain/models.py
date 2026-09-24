@@ -11,7 +11,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # --------------------------------------------------------------------------
 # Corpus (raw, frozen IPL 2024 data)
 # --------------------------------------------------------------------------
@@ -38,7 +37,7 @@ class Interval(BaseModel):
     is_pregame: bool = False
     is_innings_break: bool = False
     comments: list[Comment] = Field(default_factory=list)
-    balls: list["RawBall"] = Field(default_factory=list)
+    balls: list[RawBall] = Field(default_factory=list)
 
 
 class RawBallScore(BaseModel):
@@ -176,7 +175,7 @@ class CommentVerdict(BaseModel):
 class IntervalVerdict(BaseModel):
     """Jev's interval-level decisions."""
 
-    regime: Literal["one_sided", "tense", "swing", "dead"] | str = "tense"
+    regime: Literal["one_sided", "tense", "swing", "dead"] = "tense"
     regime_probs: dict[str, float] = Field(default_factory=dict)
     signal_quality: float = 0.0  # score: how informative is this interval's sentiment sample
     odds_stale: float = 0.0  # noul: odds snapshot looks stale/erroneous

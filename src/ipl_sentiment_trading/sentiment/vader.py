@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import math
-from typing import Iterable
+from collections.abc import Iterable
 
-from ipl_sentiment_trading.domain.models import Comment, SentimentBucket, SentimentSnapshot
+from ipl_sentiment_trading.domain.models import (
+    Comment,
+    SentimentBucket,
+    SentimentSnapshot,
+)
 from ipl_sentiment_trading.sentiment.attribution import attribute_comment
-from ipl_sentiment_trading.sentiment.lexicon import CRICKET_LEXICON, normalize_cricket_text
+from ipl_sentiment_trading.sentiment.lexicon import (
+    CRICKET_LEXICON,
+    normalize_cricket_text,
+)
 
 _DELETED = {"", "[deleted]", "[removed]"}
 _QUOTE_BANNED = (

@@ -30,7 +30,8 @@ def _resolve_decide(decide: DecideFn | None):
     """Return (decide_fn, usage_dict_or_None). Auto-builds a client only when
     API keys are actually present — otherwise the pipeline stays offline."""
     if decide is not None:
-        return decide, getattr(decide, "tracer", None)
+        owner = getattr(decide, "__self__", decide)
+        return decide, getattr(owner, "tracer", None)
     import os
 
     if not (os.getenv("TYPESAFE_API_KEY") or os.getenv("JEV_API_KEY")):

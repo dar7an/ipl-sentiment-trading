@@ -53,7 +53,7 @@ def _bucket(
         texts.append((u, " ".join(c.text.split())))
     if not weights:
         return SentimentBucket()
-    mean = sum(w * u for w, u in zip(weights, units)) / sum(weights)
+    mean = sum(w * u for w, u in zip(weights, units, strict=True)) / sum(weights)
     eff_vol = sum(weights)
     pos = [t for u, t in sorted(texts, key=lambda x: -x[0]) if u > 0.2][:2]
     neg = [t for u, t in sorted(texts, key=lambda x: x[0]) if u < -0.2][:2]

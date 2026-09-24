@@ -29,7 +29,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.8"]
 
 [project.scripts]
 ipl-analyze = "ipl_sentiment_trading.cli:main"
@@ -45,4 +45,16 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.8"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# DTZ: the corpus is naive-local-IST by design (chunk timestamps carry no
+# zone); timezone-awareness would add churn without changing semantics.
+ignore = ["DTZ"]
+# app.py runs as `streamlit run` — the src sys.path shim must precede imports;
+# its chart-builder calls are long one-liners, as are test fixture strings.
+per-file-ignores = { "src/ipl_sentiment_trading/ui/app.py" = ["E402", "E501"], "tests/test_sentiment.py" = ["E501"] }
+select = ["E", "F", "I", "B", "UP", "SIM", "C4", "ISC", "PYI", "BLE", "DTZ", "W"]

@@ -6,10 +6,11 @@ Metered proxy:     POST https://jevtypesafeai.com/api/v1/decide with a jv_live_*
 
 from __future__ import annotations
 
+import contextlib
 import os
 import random
 import time
-from typing import Any
+from typing import Any, Self
 
 import httpx
 
@@ -100,7 +101,7 @@ class DecideClient:
             except httpx.HTTPError as exc:
                 attempt += 1
                 if attempt > self.max_retries:
-                    raise JevError(f"Jev transport error after {attempt} tries: {exc}")
+                    raise JevError(f"Jev transport error after {attempt} tries: {exc}") from exc
                 self._sleep(attempt)
                 continue
             if resp.status_code == 429 or resp.status_code >= 500:
@@ -120,15 +121,13 @@ class DecideClient:
             try:
                 return DecideResult.model_validate(resp.json())
             except ValueError as exc:
-                raise JevError(f"Jev returned unparseable payload: {exc}")
+                raise JevError(f"Jev returned unparseable payload: {exc}") from exc
 
     def _sleep(self, attempt: int, resp: httpx.Response | None = None) -> None:
         wait = min(2**attempt + random.random(), 30.0)
         if resp is not None:
-            try:
+            with contextlib.suppress(ValueError):
                 wait = max(wait, float(resp.headers.get("retry-after", 0)))
-            except ValueError:
-                pass
         time.sleep(wait)
 
     def _record(
@@ -157,7 +156,7 @@ class DecideClient:
     def close(self) -> None:
         self._client.close()
 
-    def __enter__(self) -> "DecideClient":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

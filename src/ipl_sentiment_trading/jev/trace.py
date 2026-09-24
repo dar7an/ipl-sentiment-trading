@@ -6,7 +6,7 @@ and feeds eval.report's cost/latency analysis.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 
 
 class TraceEntry(BaseModel):
-    ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
     latency_ms: float = 0.0
     n_questions: int = 0
     question_keys: list[str] = Field(default_factory=list)

@@ -15,7 +15,6 @@ from ipl_sentiment_trading.corpus.schema import (
     parse_match_file,
 )
 from ipl_sentiment_trading.corpus.teams import (
-    abbreviation,
     canonicalize_team,
     team_ref,
     winner_from_id,
