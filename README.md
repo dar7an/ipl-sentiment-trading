@@ -1,137 +1,109 @@
-# ipl-sentiment-trading — a Jev showcase
+# ipl-sentiment-trading
 
-A replayed IPL 2024 paper book driven end-to-end by **Jev**, TypeSafe's System
-One decision model. Every fuzzy judgment a trading pipeline needs — reading a
-crowd, grading a signal, vetoing a bet, deciding what to say and how to say it —
-is a typed Jev decision (`choice` / `score` / `noul`) over a shared `state`,
-recorded in an auditable trace. All arithmetic — odds de-vigging, the log-odds
-view model, Kelly sizing, mark-to-market, settlement — is deterministic Python.
+**Cricket fans argue online. Bookmakers set prices. This project asks: when the crowd disagrees with the price, who's right?**
 
-The original thesis is preserved: Reddit match-thread sentiment vs. FanDuel
-implied probability, over the 2024 season's frozen 5-minute chunks. What's new
-is *who makes the judgments* — Jev, not regexes — and that every judgment is
-inspectable in `decisions.jsonl`.
+It replays the IPL 2024 season — saved match data, saved comments, saved odds — and lets an AI judge the mood of the crowd every few minutes. If the crowd's mood and the price disagree enough, it makes a *pretend* bet and keeps score. No real money ever moves.
 
-## Why Jev (and where it fits)
+## The story in one picture
 
-Jev is a small decision model: you post a `state` string plus a map of typed
-`questions`, and it answers all of them in one call with calibrated
-probabilities (`noul` for booleans, `choice`+`probabilities` for categoricals,
-`score`+`probabilities` for rankings). Three properties shaped this design:
+![Fans' comments, bookmaker odds, and every ball feed into Jev, a small AI judge. Plain math turns Jev's answers into fair prices and bet sizes. A paper book keeps score. Gemma 4 writes commentary.](docs/img/big-picture.svg)
 
-1. **Questions share the state prefix.** 94 judgments about one interval cost
-   ~10k input tokens *once*, not 94 times — so the design batches *every*
-   per-comment question of an interval into a single `decide` call.
-2. **It's fast and cheap** — measured p50 ≈ 100 ms, ~10k tokens/call (≈ $0.01
-   at $1/Mtok) — so a per-interval event loop calling it ~2× per interval is
-   practical, and every call can be traced.
-3. **It doesn't do arithmetic.** Win probabilities, Kelly stakes, de-vig —
-   numbers come from deterministic code; Jev only decides things that are
-   genuinely judgment.
+## The idea
 
-## The Jev usage map
+- Every few minutes of a match, fans post comments like *"KKR are on fire!"*
+- At the same time, the bookmaker's odds say how likely each team is to win.
+- This project reads the comments, works out which team the crowd believes in, and compares that to the price.
+- If the crowd is more excited than the price — or less — there might be an opportunity. It pretends to bet, then checks at the end whether the bet would have won.
 
-| # | Decision point | Question type | State | Purpose |
-|---|----------------|---------------|-------|---------|
-| 1 | `comment_questions` per interval | 3 × per candidate comment (`noul` relevant, `choice` team_a/team_b/neutral, `score` bullishness 0–5) | Comments + cricket + market context | Replaces the lexicon: typed, calibrated sentiment attributed to teams |
-| 2 | `interval_questions` | `choice` regime, `score` quality, `noul` odds-stale, `noul` narrate | Same state | Interval-level verdicts that gate downstream steps |
-| 3 | `trade_gate_question` | `noul` (is the edge genuine?) | Proposal prose: side, decimal, edge, sizes, cricket state | Last-line guardrail before every paper fill |
-| 4 | `route_question` | `score` drama 1–5 | Compact interval card | Routes narration between `gemma-4-26b-a4b-it` and `gemma-4-31b-it` |
-| 5 | `compaction_questions` | `noul` keep per fact | Narrator memory | Trims the narrator's context when it outgrows budget |
+The whole thing runs on old data. Think of it as a flight simulator for a trading idea, not a betting app.
 
-Plus the plumbing: `DecideClient` (official `api.typesafe.ai/v1/systemone`
-or the metered proxy, retries + JSONL cache), `JsonlTracer` (one trace row per
-call), and `JevSentimentEngine` (the big batched call).
+## Meet Jev — the judge
 
-## Pipeline
+The hard part isn't math. It's *judgment*: is a comment really about the match? Which team does it support? Is the crowd's edge real, or just noise?
 
-```
-match chunk → CricketTracker (balls, wickets, windows)
-            → quote_as_of (de-vigged FanDuel; carry-forward staleness flag)
-            → JevSentimentEngine (one decide call: N×3 comment + 4 interval questions)
-            → compute_view (deterministic log-odds + shrinkage; needs ≥3 comments/team,
-              |edge| ≥ 3%, effective volume ≥ 20)
-            → propose_fill (Kelly stake caps, exposure cap, then the Jev gate)
-            → PaperBook (mark / settle)
-            → GemmaNarrator (if verdict says narrate; Jev routes the model)
-```
+**Jev** is a small AI model built for exactly this. You give it a situation (the comments, the score, the odds) plus a list of typed questions, and it answers every question in one go — with probabilities, not guesses:
 
-`live_features` per interval carry everything needed to learn offline; a
-lookahead guard refuses any feature derived from `forecast_data`, `winner`, or
-`note` fields.
+- *"Is this comment about the game?"* → yes/no, with a probability
+- *"Which team is it about?"* → KKR / SRH / neither, with probabilities
+- *"How upbeat is it?"* → a score from 0 to 5
 
-## Measured on the IPL 2024 final (match 74, SRH vs KKR)
+Because all the questions go in one request, reading 30 comments costs about as much as reading one — and every single answer is written down in a log you can audit.
 
-From `ipl-analyze analyze 74 --sentiment jev --narrative --decisions-jsonl`:
+![The five jobs Jev does: read each comment, judge the moment, veto shaky bets, rate the drama, tidy the notes.](docs/img/jev-five-jobs.svg)
 
-| Metric | Value |
-|--------|-------|
-| decide calls | 82 (81 API + 1 cache hit) |
-| typed questions answered | 3,648 |
-| input tokens / est. cost | 401,903 / ≈ $0.40 @ $1/Mtok |
-| latency p50 / p95 | 98 ms / 155 ms |
-| Jev gate vetoes | 3 of 3 proposed fills (all below the 0.5 bar: 0.40, 0.39, 0.45) |
-| intervals narrated by Gemma | 30 of 38 |
+**Important:** Jev never does arithmetic. Fair prices, bet sizes, and winnings are plain code — you can check every number by hand.
 
-Match 74 was a KKR blowout, priced correctly. Jev's read of the crowd agreed —
-it attributed almost everything to KKR and vetoed every marginal SRH-lean
-proposal. **Zero fills, flat book, and the trace shows exactly why.** That is
-the point: the guardrail is a decision model, so its "no" is a calibrated
-probability you can inspect, not a threshold you can't.
+## A real decision, step by step
 
-A/B vs. the VADER baseline (`ipl-analyze eval 74`): sign agreement 45–53%
-across runs (Jev is nondeterministic), rank correlation ~0.1 — Jev is far more discriminating about what a comment is
-actually saying (its mean per-interval sentiment gap was +0.9 pts vs. VADER's
-−7.6 pts, matching the KKR-dominant crowd). Brier on this match: view 0.045 vs
-market 0.040 — the sentiment overlay added noise on a game the market already
-had right; the corpus covers more than one match.
+On the 2024 final (KKR vs SRH), the crowd leaned hard toward KKR — but the market already knew that. Here's one moment, exactly as it happened:
 
-Sample Gemma narration (routed): *"Sunrisers Hyderabad's collapse intensifies
-as the seventh wicket falls, leaving them entirely at KKR's mercy in this
-one-sided final."*
+![A fan comment gets read by Jev, 30 comments lean KKR, the market says 82% while the crowd implies ~88% — a +5.9% gap — but the gate asks "is it genuine?" and answers 0.40: no.](docs/img/one-decision.svg)
 
-## Quickstart
+That's the point of the gate: before any pretend bet, Jev is asked one last question — *"is this edge genuine?"* — and anything under 50% sure gets rejected. (If Jev gives no clear answer, nothing is vetoed — the bet goes through.) On this match it said **no all three times**, and it was right: KKR won big, and the flat book lost nothing.
 
-Python 3.11+.
+## What actually happened on the final
+
+| Measured, not guessed | Value |
+|---|---|
+| Jev calls | 82 |
+| Typed answers | 3,648 |
+| Total cost | about **$0.40** |
+| Speed per call | ~100 ms |
+| Bets taken | **0** (all 3 proposals vetoed) |
+| Commentary written | 30 of 38 intervals |
+
+*Jev is slightly nondeterministic — re-running the same match can move small numbers a little.*
+
+## What it looks like
+
+`ipl-ui` serves a small web dashboard: pick a match, press Analyze, replay the game interval by interval — price vs. crowd view, the paper account, and every Jev decision laid out as chips and tables.
+
+![The dashboard: crowd view vs price, the paper account, and every Jev decision.](docs/img/dashboard.png)
+
+## Try it
+
+You need Python 3.11+ and Node 18+.
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest                                  # 36 tests, fully offline
-.venv/bin/ipl-analyze list                        # corpus matches
-.venv/bin/ipl-analyze analyze 74 --sentiment vader # offline sentiment; the Jev gate still fires if TYPESAFE_API_KEY is set
+.venv/bin/pytest                                  # all 36 tests run offline
+.venv/bin/ipl-analyze analyze 74 --sentiment vader # works with zero API keys
 
-export TYPESAFE_API_KEY=...   # Jev (or JEV_API_KEY for the metered proxy)
-.venv/bin/ipl-analyze analyze 74 --sentiment jev --decisions-jsonl trace.jsonl
-
-export GEMINI_API_KEY=...     # Gemma 4 narrator
+export TYPESAFE_API_KEY=...   # turns on Jev
+export GEMINI_API_KEY=...     # turns on the commentary writer
 .venv/bin/ipl-analyze analyze 74 --sentiment jev --narrative
-.venv/bin/ipl-analyze eval 74 --sentiment jev --trace trace.jsonl  # A/B + cost + Brier
-cd web && npm install && npm run build          # build the React+StyleX UI once
-.venv/bin/ipl-ui              # serves it + the JSON API on :8000
+.venv/bin/ipl-analyze eval 74 --sentiment jev      # Jev vs. baseline + cost report
+
+cd web && npm install && npm run build && cd ..   # build the UI once
+.venv/bin/ipl-ui              # open http://localhost:8000
 ```
 
-`.env.example` documents every key. With no keys, everything still runs — the
-sentiment engine falls back to VADER and the narrator is skipped.
+See `.env.example` for all the keys. Without keys everything still works — sentiment falls back to the offline VADER baseline and there's no commentary.
 
-## Layout
+## Words you might not know
+
+- **Paper trading** — pretending to bet, keeping score honestly.
+- **Odds → probability** — a bookmaker's price implies a win chance, minus a built-in fee we remove first ("de-vig").
+- **Edge** — the gap between our view and the market's.
+- **Kelly staking** — a cautious formula for "how much to risk": tiny edges get tiny bets.
+- **Gate veto** — Jev's last-minute "I don't believe this edge is real" no.
+- **VADER** — the classic word-list sentiment tool; our free baseline that needs no AI keys.
+
+## Where things live
 
 ```
+data/            the saved 2024 season — comments, balls, odds (read-only)
 src/ipl_sentiment_trading/
-  corpus/    match/balls/odds/comments loading, teams, venues, timeutils
-  cricket/   legal scoring rules + CricketTracker (innings state, windows)
-  market/    de-vig, quotes, carry-forward staleness
-  sentiment/ VADER baseline, candidate sampling, JevSentimentEngine, aggregation
-  signal/    log-odds view + effective-volume shrinkage
-  policy/    proposal construction + Jev trade gate
-  ledger/    path-dependent paper book (fills, MTM, settlement, drawdown)
-  narrate/   Gemma 4 narrator w/ Jev drama routing + memory compaction
-  jev/       DecideClient, question builders, JSONL cache + tracer
-  pipeline/  analyze_match orchestration + leak-guarded live features
-  eval/      VADER A/B, Brier report, cost report
-  ui/        FastAPI server (JSON API + static host for the React UI)
-data/        frozen IPL 2024 corpus (chunks, balls, odds, comments) — read-only
-web/         React + StyleX single-page UI (Vite; builds to web/dist)
-ARCHITECTURE.md   design spec and the swarm's build plan
+  jev/           talking to Jev: client, questions, the audit log
+  sentiment/     turning comments into a crowd score
+  market/        bookmaker prices → fair probabilities
+  signal/ policy/ ledger/   the math: view → size → pretend book
+  narrate/       Gemma 4 commentary, routed by Jev's drama score
+  pipeline/ eval/ ui/       run it / measure it / show it
+web/             the React + StyleX dashboard
+ARCHITECTURE.md  the design spec for grown-ups
 ```
 
-Not live betting, not a broker, not financial advice.
+## The fine print
+
+This is a research demo. It's not live betting, it's not a broker, and past cricket games don't predict anything else. The saved data is the product; the AI prose is decoration.

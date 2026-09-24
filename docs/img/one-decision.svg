@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 320" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="980" height="320" rx="16" fill="#f7f7f9"/>
+
+  <!-- comment card -->
+  <rect x="24" y="30" width="280" height="84" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="164" y="54" text-anchor="middle" font-size="12" font-weight="600" fill="#6b7280">A REAL FAN COMMENT</text>
+  <text x="164" y="78" text-anchor="middle" font-size="14" fill="#111827">"KKR bowlers are on fire,</text>
+  <text x="164" y="97" text-anchor="middle" font-size="14" fill="#111827">SRH has no answer"</text>
+
+  <line x1="304" y1="72" x2="360" y2="72" stroke="#6b7280" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- jev answers -->
+  <rect x="360" y="22" width="260" height="100" rx="10" fill="#eef2ff" stroke="#4f46e5"/>
+  <text x="490" y="44" text-anchor="middle" font-size="12" font-weight="700" fill="#4338ca">JEV ANSWERS (3 questions)</text>
+  <text x="490" y="66" text-anchor="middle" font-size="12.5" fill="#111827">about the game? yes, 98%</text>
+  <text x="490" y="86" text-anchor="middle" font-size="12.5" fill="#111827">which team? KKR, 92%</text>
+  <text x="490" y="106" text-anchor="middle" font-size="12.5" fill="#111827">how positive for them? 4.1 / 5</text>
+
+  <!-- crowd → price -->
+  <rect x="24" y="150" width="280" height="70" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="164" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="#6b7280">30 COMMENTS LATER…</text>
+  <text x="164" y="198" text-anchor="middle" font-size="14" fill="#111827">Crowd says: KKR is rolling</text>
+
+  <rect x="360" y="150" width="260" height="70" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="490" y="174" text-anchor="middle" font-size="12" font-weight="600" fill="#6b7280">THE PRICE CHECK</text>
+  <text x="490" y="197" text-anchor="middle" font-size="13.5" fill="#111827">market says 82% · crowd says ~88%</text>
+
+  <line x1="304" y1="185" x2="352" y2="185" stroke="#6b7280" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- gap -->
+  <rect x="652" y="120" width="140" height="100" rx="10" fill="#ffffff" stroke="#d97706" stroke-width="2"/>
+  <text x="722" y="152" text-anchor="middle" font-size="13" font-weight="700" fill="#d97706">+5.9% gap</text>
+  <text x="722" y="176" text-anchor="middle" font-size="11.5" fill="#6b7280">big enough to</text>
+  <text x="722" y="194" text-anchor="middle" font-size="11.5" fill="#6b7280">propose a bet</text>
+
+  <line x1="620" y1="185" x2="644" y2="185" stroke="#6b7280" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- gate -->
+  <rect x="824" y="120" width="132" height="100" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="890" y="148" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">THE GATE</text>
+  <text x="890" y="172" text-anchor="middle" font-size="11.5" fill="#111827">"is it genuine?"</text>
+  <text x="890" y="192" text-anchor="middle" font-size="14" font-weight="700" fill="#dc2626">0.40 → NO</text>
+
+  <line x1="792" y1="170" x2="816" y2="170" stroke="#6b7280" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- bottom caption -->
+  <text x="490" y="272" text-anchor="middle" font-size="14" fill="#111827">On the real final, Jev vetoed all 3 bet ideas — and the market had it right.</text>
+  <text x="490" y="294" text-anchor="middle" font-size="12" fill="#6b7280">The book stayed flat. Sometimes the smartest trade is no trade.</text>
+</svg>
