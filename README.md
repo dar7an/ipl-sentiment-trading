@@ -106,7 +106,8 @@ export TYPESAFE_API_KEY=...   # Jev (or JEV_API_KEY for the metered proxy)
 export GEMINI_API_KEY=...     # Gemma 4 narrator
 .venv/bin/ipl-analyze analyze 74 --sentiment jev --narrative
 .venv/bin/ipl-analyze eval 74 --sentiment jev --trace trace.jsonl  # A/B + cost + Brier
-.venv/bin/ipl-ui              # Streamlit dashboard (Jev decisions panel included)
+cd web && npm install && npm run build          # build the React+StyleX UI once
+.venv/bin/ipl-ui              # serves it + the JSON API on :8000
 ```
 
 `.env.example` documents every key. With no keys, everything still runs — the
@@ -127,8 +128,9 @@ src/ipl_sentiment_trading/
   jev/       DecideClient, question builders, JSONL cache + tracer
   pipeline/  analyze_match orchestration + leak-guarded live features
   eval/      VADER A/B, Brier report, cost report
-  ui/        Streamlit dashboard incl. the Jev decisions panel
+  ui/        FastAPI server (JSON API + static host for the React UI)
 data/        frozen IPL 2024 corpus (chunks, balls, odds, comments) — read-only
+web/         React + StyleX single-page UI (Vite; builds to web/dist)
 ARCHITECTURE.md   design spec and the swarm's build plan
 ```
 

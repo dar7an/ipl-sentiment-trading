@@ -285,11 +285,10 @@ def _cmd_eval(args: argparse.Namespace) -> int:
 
 def ui_main() -> None:
     load_dotenv()
-    from streamlit.web import cli as stcli
+    from ipl_sentiment_trading.ui.server import serve
 
-    app = Path(__file__).resolve().parent / "ui" / "app.py"
-    sys.argv = ["streamlit", "run", str(app), *sys.argv[1:]]
-    sys.exit(stcli.main())
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+    serve(port=port)
 
 
 def main(argv: list[str] | None = None) -> None:

@@ -3,6 +3,7 @@ initialize: |
   python -m venv .venv
   .venv/bin/pip install -e '.[dev]'
   .venv/bin/python -c "import nltk; nltk.download('vader_lexicon', quiet=True)"
+  (cd web && npm install && npm run build)   # node comes from ~/.nvm
 maintenance: |
   .venv/bin/pip install -e '.[dev]'
 knowledge:
@@ -18,7 +19,7 @@ knowledge:
       .venv/bin/ipl-analyze analyze 74 --sentiment vader   # offline
       .venv/bin/ipl-analyze analyze 74 --sentiment jev --decisions-jsonl trace.jsonl  # needs TYPESAFE_API_KEY
       .venv/bin/ipl-analyze eval 74 --sentiment jev --trace trace.jsonl
-      .venv/bin/ipl-ui            # streamlit dashboard
+      .venv/bin/ipl-ui            # React+StyleX UI (build web/dist first: cd web && npm i && npm run build)
   - name: secrets
     contents: |
       TYPESAFE_API_KEY (or JEV_API_KEY) enables Jev; GEMINI_API_KEY enables narration.

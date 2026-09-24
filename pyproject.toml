@@ -21,11 +21,10 @@ dependencies = [
   "pydantic>=2.7",
   "python-dotenv>=1.0",
   "nltk>=3.8",
-  "pandas>=2.2",
-  "streamlit>=1.36",
-  "plotly>=5.22",
   "google-genai>=1.0",
   "httpx>=0.27",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
 ]
 
 [project.optional-dependencies]
@@ -54,7 +53,6 @@ line-length = 120
 # DTZ: the corpus is naive-local-IST by design (chunk timestamps carry no
 # zone); timezone-awareness would add churn without changing semantics.
 ignore = ["DTZ"]
-# app.py runs as `streamlit run` — the src sys.path shim must precede imports;
-# its chart-builder calls are long one-liners, as are test fixture strings.
-per-file-ignores = { "src/ipl_sentiment_trading/ui/app.py" = ["E402", "E501"], "tests/test_sentiment.py" = ["E501"] }
+# test fixture strings run long.
+per-file-ignores = { "tests/test_sentiment.py" = ["E501"] }
 select = ["E", "F", "I", "B", "UP", "SIM", "C4", "ISC", "PYI", "BLE", "DTZ", "W"]
