@@ -135,9 +135,9 @@ def load_match(match: int|str|Path, root: Path|None=None) -> CorpusMatch
     # accepts match id or path to chunks json; maps chunk list → Interval list;
     # parse "%Y-%m-%d %I:%M:%S %p" (+ optional " IST"); odds → OddsSnapshot (source_index=i)
 ```
-`cricket/legal.py`: `is_legal(ball: RawBall) -> bool` (score.ball), `runs(ball)`, `is_wicket`, `is_boundary`, extras.
-`cricket/state.py`: `compute_state(balls, interval_end, team_a, team_b, prev_state) -> tuple[CricketState, WindowStats]` — cumulative innings state using only balls with `updated_at <= end`; legal balls exclude wides/no-balls; dot% counts legal 0-run balls incl. wickets; partnership persists until a wicket; innings switch on batting-team change; never read `forecast_data`.
-`market/odds.py`: `quote_as_of(odds, end, team_a, team_b) -> MarketQuote|None` — last snapshot with `last_update <= end` (carry-forward flag if older than the previous interval's), `p_raw = 1/decimal`, `overround = Σp_raw − 1`, `p_fair = p_raw/Σ`.
+`cricket/legal.py` (as built): `is_wide/is_no_ball/is_legal_delivery/is_dot/is_boundary_ball/run_rate/pct/total_runs` on `RawBallScore`; `total_runs = runs + bye + leg_bye` (score.runs already carries wide/no-ball penalties).
+`cricket/state.py` (as built): `CricketTracker(team_a, team_b)` — `note_interval_flags(is_innings_break=...)`, `apply_balls(balls) -> WindowStats`, `snapshot(is_pregame=..., is_innings_break=...) -> CricketState`, `player_team` surname→team map for narrative attribution. **Feeds the complete `CorpusMatch.balls` feed**, not chunk-embedded subsets — the pipeline feeds balls-file balls whose `updated_at` falls in `(prev_interval_end, interval_end]` so cumulative state never misses balls between chunk boundaries. Legal balls exclude wides/no-balls; dot% counts legal 0-total-run balls incl. wickets; partnership (all runs incl. extras) persists until a wicket; innings switch on batting-team change or an innings-break flag; never read `forecast_data`.
+`market/odds.py` (as built): `implied_probability`, `two_way_market`, `quote_for_teams`, `latest_snapshot_as_of`, `quote_as_of(odds, end, team_a, team_b, prev_snapshot=None)` — last snapshot with `last_update <= end` (carry-forward flag when it's the same snapshot as the previous interval), `p_raw = 1/decimal`, `overround = Σp_raw − 1`, `p_fair = p_raw/Σ`.
 
 ### A3 — `sentiment/` (deps: domain, corpus.teams, jev.types — inject `DecideFn`)
 
