@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 190" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+  <rect x="0" y="0" width="980" height="190" rx="16" fill="#f7f7f9"/>
+  <g font-size="13">
+    <rect x="20" y="24" width="176" height="142" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <circle cx="44" cy="52" r="14" fill="#4f46e5"/><text x="44" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">1</text>
+    <text x="108" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">Read each comment</text>
+    <text x="108" y="108" text-anchor="middle" font-size="12" fill="#6b7280">Is it about the game?</text>
+    <text x="108" y="126" text-anchor="middle" font-size="12" fill="#6b7280">Which team? Happy or</text>
+    <text x="108" y="144" text-anchor="middle" font-size="12" fill="#6b7280">sad? (3 questions)</text>
+
+    <rect x="208" y="24" width="176" height="142" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <circle cx="232" cy="52" r="14" fill="#4f46e5"/><text x="232" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">2</text>
+    <text x="296" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">Judge the moment</text>
+    <text x="296" y="108" text-anchor="middle" font-size="12" fill="#6b7280">Tense? One-sided?</text>
+    <text x="296" y="126" text-anchor="middle" font-size="12" fill="#6b7280">Is the crowd saying</text>
+    <text x="296" y="144" text-anchor="middle" font-size="12" fill="#6b7280">anything useful?</text>
+
+    <rect x="396" y="24" width="176" height="142" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <circle cx="420" cy="52" r="14" fill="#dc2626"/><text x="420" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">3</text>
+    <text x="484" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">Veto shaky bets</text>
+    <text x="484" y="108" text-anchor="middle" font-size="12" fill="#6b7280">"Is this edge real or</text>
+    <text x="484" y="126" text-anchor="middle" font-size="12" fill="#6b7280">just noise?" Under 50%</text>
+    <text x="484" y="144" text-anchor="middle" font-size="12" fill="#6b7280">sure → no bet.</text>
+
+    <rect x="584" y="24" width="176" height="142" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <circle cx="608" cy="52" r="14" fill="#4f46e5"/><text x="608" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">4</text>
+    <text x="672" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">Rate the drama</text>
+    <text x="672" y="108" text-anchor="middle" font-size="12" fill="#6b7280">Scores each moment</text>
+    <text x="672" y="126" text-anchor="middle" font-size="12" fill="#6b7280">1–5, so the writer uses</text>
+    <text x="672" y="144" text-anchor="middle" font-size="12" fill="#6b7280">the right-size model.</text>
+
+    <rect x="772" y="24" width="188" height="142" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <circle cx="796" cy="52" r="14" fill="#4f46e5"/><text x="796" y="57" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">5</text>
+    <text x="866" y="84" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">Tidy the notes</text>
+    <text x="866" y="108" text-anchor="middle" font-size="12" fill="#6b7280">Decides which old</text>
+    <text x="866" y="126" text-anchor="middle" font-size="12" fill="#6b7280">memories the writer</text>
+    <text x="866" y="144" text-anchor="middle" font-size="12" fill="#6b7280">should keep or drop.</text>
+  </g>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 300" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="980" height="300" rx="16" fill="#f7f7f9"/>
+
+  <!-- inputs -->
+  <g>
+    <rect x="24" y="34" width="180" height="62" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="114" y="60" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">Fans' comments</text>
+    <text x="114" y="80" text-anchor="middle" font-size="12" fill="#6b7280">Reddit match threads</text>
+
+    <rect x="24" y="116" width="180" height="62" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="114" y="142" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">Bookmaker odds</text>
+    <text x="114" y="162" text-anchor="middle" font-size="12" fill="#6b7280">FanDuel prices</text>
+
+    <rect x="24" y="198" width="180" height="62" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+    <text x="114" y="224" text-anchor="middle" font-size="14" font-weight="600" fill="#111827">Every ball</text>
+    <text x="114" y="244" text-anchor="middle" font-size="12" fill="#6b7280">score, wickets, overs</text>
+  </g>
+
+  <!-- arrows in -->
+  <line x1="204" y1="65" x2="292" y2="120" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="204" y1="147" x2="292" y2="147" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="204" y1="229" x2="292" y2="176" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Jev -->
+  <rect x="292" y="88" width="170" height="118" rx="12" fill="#4f46e5"/>
+  <text x="377" y="128" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">JEV</text>
+  <text x="377" y="152" text-anchor="middle" font-size="12" fill="#e0e7ff">a small AI judge that</text>
+  <text x="377" y="168" text-anchor="middle" font-size="12" fill="#e0e7ff">answers typed questions</text>
+  <text x="377" y="184" text-anchor="middle" font-size="12" fill="#e0e7ff">with probabilities</text>
+
+  <!-- arrow to math -->
+  <line x1="462" y1="147" x2="540" y2="147" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- math -->
+  <rect x="540" y="88" width="170" height="118" rx="12" fill="#ffffff" stroke="#4f46e5" stroke-width="2"/>
+  <text x="625" y="124" text-anchor="middle" font-size="14" font-weight="700" fill="#111827">Plain math</text>
+  <text x="625" y="148" text-anchor="middle" font-size="12" fill="#6b7280">fair price, bet size,</text>
+  <text x="625" y="164" text-anchor="middle" font-size="12" fill="#6b7280">wins &amp; losses</text>
+  <text x="625" y="186" text-anchor="middle" font-size="11" fill="#9ca3af">no AI — just code</text>
+
+  <!-- arrow to book -->
+  <line x1="710" y1="147" x2="788" y2="147" stroke="#6b7280" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- book -->
+  <rect x="788" y="88" width="168" height="118" rx="12" fill="#111827"/>
+  <text x="872" y="128" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">Paper book</text>
+  <text x="872" y="152" text-anchor="middle" font-size="12" fill="#d1d5db">pretend money only</text>
+  <text x="872" y="172" text-anchor="middle" font-size="12" fill="#d1d5db">score kept honestly</text>
+
+  <!-- gemma side note -->
+  <rect x="292" y="236" width="248" height="44" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="416" y="255" text-anchor="middle" font-size="12" font-weight="600" fill="#111827">Gemma 4 (the sportswriter)</text>
+  <text x="416" y="272" text-anchor="middle" font-size="11" fill="#6b7280">writes one line of commentary per interval</text>
+  <line x1="416" y1="236" x2="416" y2="206" stroke="#6b7280" stroke-width="2" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+</svg>
