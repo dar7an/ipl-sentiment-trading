@@ -39,7 +39,7 @@ On the 2024 final (KKR vs SRH), the crowd leaned hard toward KKR — but the mar
 
 ![A fan comment gets read by Jev, 30 comments lean KKR, the market says 82% while the crowd implies ~88% — a +5.9% gap — but the gate asks "is it genuine?" and answers 0.40: no.](docs/img/one-decision.svg)
 
-That's the point of the gate: before any pretend bet, Jev is asked one last question — *"is this edge genuine?"* — and anything under 50% sure gets rejected. On this match it said **no all three times**, and it was right: KKR won big, and the flat book lost nothing.
+That's the point of the gate: before any pretend bet, Jev is asked one last question — *"is this edge genuine?"* A value below 50% vetoes the proposal only when Jev supplies a valid NoulA gate answer; an omitted or non-NoulA answer skips the veto, so the fill may still be recorded. On this match it said **no all three times**, and it was right: KKR won big, and the flat book lost nothing.
 
 ## What actually happened on the final
 
