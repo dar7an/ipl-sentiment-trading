@@ -1,13 +1,19 @@
+"""live_features — the leak-guarded feature dict per interval.
+
+Anything the winner could reveal is banned: the FORBIDDEN_FEATURE_SUBSTR
+guard fails loudly rather than leaking a result into a "live" row.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
 
 from ipl_sentiment_trading.domain.models import (
     CricketState,
-    IntervalWindowStats,
     MarketQuote,
     SentimentSnapshot,
     Signal,
+    WindowStats,
 )
 
 LIVE_FEATURE_KEYS = (
@@ -42,12 +48,19 @@ LIVE_FEATURE_KEYS = (
     "p_fair_a",
     "p_fair_b",
     "overround",
+    "market_carry_forward",
     "sent_mean_a",
     "sent_mean_b",
     "sent_vol_a",
     "sent_vol_b",
+    "sent_eff_a",
+    "sent_eff_b",
     "sent_match_mean",
     "sent_match_vol",
+    "sentiment_source",
+    "regime",
+    "signal_quality",
+    "odds_stale",
     "p_sent_a",
     "p_view_a",
     "edge_a",
@@ -75,11 +88,12 @@ def build_live_features(
     team_a: str,
     team_b: str,
     cricket: CricketState,
-    window: IntervalWindowStats,
+    window: WindowStats,
     market: MarketQuote | None,
     sentiment: SentimentSnapshot,
     signal: Signal,
 ) -> dict:
+    verdict = sentiment.interval_verdict
     features = {
         "interval": interval_name,
         "start_time": start.isoformat(sep=" "),
@@ -112,12 +126,19 @@ def build_live_features(
         "p_fair_a": round(market.p_fair[team_a], 6) if market else None,
         "p_fair_b": round(market.p_fair[team_b], 6) if market else None,
         "overround": round(market.overround, 6) if market else None,
+        "market_carry_forward": market.is_carry_forward if market else None,
         "sent_mean_a": round(sentiment.team_a.mean, 4),
         "sent_mean_b": round(sentiment.team_b.mean, 4),
         "sent_vol_a": sentiment.team_a.volume,
         "sent_vol_b": sentiment.team_b.volume,
+        "sent_eff_a": round(sentiment.team_a.effective_volume, 2),
+        "sent_eff_b": round(sentiment.team_b.effective_volume, 2),
         "sent_match_mean": round(sentiment.match_level.mean, 4),
         "sent_match_vol": sentiment.match_level.volume,
+        "sentiment_source": sentiment.source,
+        "regime": verdict.regime if verdict else None,
+        "signal_quality": verdict.signal_quality if verdict else None,
+        "odds_stale": verdict.odds_stale if verdict else None,
         "p_sent_a": None if signal.p_sent_a is None else round(signal.p_sent_a, 6),
         "p_view_a": None if signal.p_view_a is None else round(signal.p_view_a, 6),
         "edge_a": None if signal.edge_a is None else round(signal.edge_a, 6),

@@ -30,3 +30,7 @@ analysis-*.md
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Web UI build
+web/node_modules/
+web/dist/

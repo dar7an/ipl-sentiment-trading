@@ -1,7 +1,14 @@
+"""Path-dependent cricket state across a match's frozen intervals.
+
+The tracker is cumulative: feed each interval's balls in order, then snapshot.
+Partnership is NOT reset at interval boundaries — only at wickets.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ipl_sentiment_trading.corpus.teams import canonicalize_team
 from ipl_sentiment_trading.cricket.legal import (
     is_boundary_ball,
     is_dot,
@@ -10,10 +17,11 @@ from ipl_sentiment_trading.cricket.legal import (
     is_wide,
     pct,
     run_rate,
+    total_runs,
 )
-from ipl_sentiment_trading.data.schema import FrozenBall
-from ipl_sentiment_trading.data.teams import canonicalize_team
-from ipl_sentiment_trading.domain.models import CricketState, IntervalWindowStats
+from ipl_sentiment_trading.domain.models import CricketState, RawBall, WindowStats
+
+_COMMON_SURNAMES = {"singh", "kumar", "sharma", "khan", "das", "raj"}
 
 
 @dataclass
@@ -29,8 +37,6 @@ class _InningsTally:
 
 @dataclass
 class CricketTracker:
-    """Path-dependent cricket state. Partnership is NOT reset at interval bounds."""
-
     team_a: str
     team_b: str
     innings: int = 0
@@ -45,9 +51,7 @@ class CricketTracker:
         self.tallies = {self.team_a: _InningsTally(), self.team_b: _InningsTally()}
 
     def _other(self, team: str) -> str:
-        if team == self.team_a:
-            return self.team_b
-        return self.team_a
+        return self.team_b if team == self.team_a else self.team_a
 
     def _start_innings(self, team: str) -> None:
         if self.innings <= 0:
@@ -63,34 +67,27 @@ class CricketTracker:
         if is_innings_break:
             self.in_break = True
 
-    def _remember_players(self, ball: FrozenBall, batting: str) -> None:
-        batting_c = canonicalize_team(batting) or batting
-        bowling_c = self._other(batting_c)
-        bat = (ball.batsman.fullname or "").strip()
-        bowl = (ball.bowler.fullname or "").strip()
+    def _remember_players(self, ball: RawBall, batting: str) -> None:
+        bowling_c = self._other(batting)
+        bat = ((ball.batsman or {}).get("fullname") or "").strip()
+        bowl = ((ball.bowler or {}).get("fullname") or "").strip()
         if bat:
-            self.player_team[bat] = batting_c
+            self.player_team[bat] = batting
             last = bat.split()[-1]
-            if last and last.lower() not in {"singh", "kumar", "sharma", "khan", "das", "raj"}:
-                self.player_team.setdefault(last, batting_c)
+            if last and last.lower() not in _COMMON_SURNAMES:
+                self.player_team.setdefault(last, batting)
         if bowl:
             self.player_team[bowl] = bowling_c
             last = bowl.split()[-1]
-            if last and last.lower() not in {"singh", "kumar", "sharma", "khan", "das", "raj"}:
+            if last and last.lower() not in _COMMON_SURNAMES:
                 self.player_team.setdefault(last, bowling_c)
 
-    def apply_ball(self, ball: FrozenBall) -> None:
+    def apply_ball(self, ball: RawBall) -> None:
         team = canonicalize_team(ball.name) or (ball.name or None)
         if team and team not in self.tallies:
-            # Keep unknown batting names from poisoning the two-team book.
-            if team not in {self.team_a, self.team_b}:
-                team = None
+            team = None  # keep stray names out of the two-team book
         if team:
-            if self.innings == 0:
-                self._start_innings(team)
-            elif self.in_break:
-                self._start_innings(team)
-            elif self.batting_team and team != self.batting_team:
+            if self.innings == 0 or self.in_break or team != self.batting_team:
                 self._start_innings(team)
             else:
                 self.batting_team = team
@@ -100,10 +97,10 @@ class CricketTracker:
             return
         score = ball.score
         tally = self.tallies[batting]
-        tally.runs += score.runs
-        self.partnership_runs += score.runs
-        legal = is_legal_delivery(score)
-        if legal:
+        runs_off = total_runs(score)
+        tally.runs += runs_off
+        self.partnership_runs += runs_off
+        if is_legal_delivery(score):
             tally.legal_balls += 1
             self.partnership_legal += 1
             if is_dot(score):
@@ -113,18 +110,18 @@ class CricketTracker:
         if score.six:
             tally.sixes += 1
         if is_boundary_ball(score):
-            tally.boundary_runs += score.runs
+            tally.boundary_runs += runs_off
         if score.is_wicket:
             tally.wickets += 1
             self.partnership_runs = 0
             self.partnership_legal = 0
         self._remember_players(ball, batting)
 
-    def apply_balls(self, balls: list[FrozenBall]) -> IntervalWindowStats:
-        window = IntervalWindowStats()
+    def apply_balls(self, balls: list[RawBall]) -> WindowStats:
+        window = WindowStats()
         for ball in balls:
             score = ball.score
-            window.runs += score.runs
+            window.runs += total_runs(score)
             if is_legal_delivery(score):
                 window.legal_balls += 1
                 if is_dot(score):
@@ -140,7 +137,7 @@ class CricketTracker:
             if is_no_ball(score):
                 window.no_balls += 1
             if is_boundary_ball(score):
-                window.boundary_runs += score.runs
+                window.boundary_runs += total_runs(score)
             self.apply_ball(ball)
         window.run_rate = run_rate(window.runs, window.legal_balls)
         window.dot_ball_pct = pct(window.dots, window.legal_balls)
@@ -165,7 +162,7 @@ class CricketTracker:
             innings_legal_balls=legal,
             run_rate=run_rate(runs, legal),
             dot_ball_pct=pct(tally.dots, legal) if tally else 0.0,
-            boundary_ball_pct=pct((tally.fours + tally.sixes), legal) if tally else 0.0,
+            boundary_ball_pct=pct(tally.fours + tally.sixes, legal) if tally else 0.0,
             boundary_run_share=pct(tally.boundary_runs, runs) if tally else 0.0,
             partnership_runs=self.partnership_runs,
             partnership_legal_balls=self.partnership_legal,
