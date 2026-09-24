@@ -36,7 +36,9 @@ class Interval(BaseModel):
     start_time: datetime
     end_time: datetime
     is_pregame: bool = False
+    is_innings_break: bool = False
     comments: list[Comment] = Field(default_factory=list)
+    balls: list["RawBall"] = Field(default_factory=list)
 
 
 class RawBallScore(BaseModel):
