@@ -2,24 +2,25 @@
 initialize: |
   python -m venv .venv
   .venv/bin/pip install -e '.[dev]'
-  .venv/bin/python -c "import nltk; nltk.download('vader_lexicon', quiet=True)"
-  (cd web && npm install && npm run build)   # node comes from ~/.nvm
+  .venv/bin/python -c "import nltk; nltk.download('vader_lexicon', quiet=True, raise_on_error=True)"
+  (cd web && npm ci && npm run build)   # node comes from ~/.nvm
 maintenance: |
   .venv/bin/pip install -e '.[dev]'
+  (cd web && npm ci && npm run build)
 knowledge:
   - name: lint
     contents: |
       .venv/bin/ruff check src/ tests/
   - name: test
     contents: |
-      .venv/bin/pytest            # fully offline; never requires API keys
+      .venv/bin/pytest            # no API keys; uses the preloaded NLTK lexicon
   - name: run
     contents: |
       .venv/bin/ipl-analyze list
-      .venv/bin/ipl-analyze analyze 74 --sentiment vader   # offline
+      env -u TYPESAFE_API_KEY -u JEV_API_KEY -u GEMINI_API_KEY -u GOOGLE_API_KEY PYTHON_DOTENV_DISABLED=1 .venv/bin/ipl-analyze analyze 74 --sentiment vader
       .venv/bin/ipl-analyze analyze 74 --sentiment jev --decisions-jsonl trace.jsonl  # needs TYPESAFE_API_KEY
       .venv/bin/ipl-analyze eval 74 --sentiment jev --trace trace.jsonl
-      .venv/bin/ipl-ui            # React+StyleX UI (build web/dist first: cd web && npm i && npm run build)
+      .venv/bin/ipl-ui            # React+StyleX UI (build web/dist first: cd web && npm ci && npm run build)
   - name: secrets
     contents: |
       TYPESAFE_API_KEY (or JEV_API_KEY) enables Jev; GEMINI_API_KEY enables narration.
