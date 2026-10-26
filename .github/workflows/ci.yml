@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.14"]
+    env:
+      TYPESAFE_API_KEY: ""
+      JEV_API_KEY: ""
+      GEMINI_API_KEY: ""
+      GOOGLE_API_KEY: ""
+      PYTHON_DOTENV_DISABLED: "1"
+      NLTK_DATA: ${{ github.workspace }}/.nltk_data
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.13.4"
+      - run: uv sync --locked
+      - run: uv run --no-sync ruff check src/ tests/
+      - name: Check cold and warm VADER initialization
+        run: |
+          mkdir -m 700 "$NLTK_DATA"
+          uv run --no-sync python - <<'PY'
+          import os
+          from unittest.mock import patch
+          import nltk
+          from ipl_sentiment_trading.sentiment.vader import VaderSentimentAnalyzer
+
+          nltk.data.path[:] = [os.environ["NLTK_DATA"]]
+          assert VaderSentimentAnalyzer().score_text("what a six!!") > 0.5
+          with patch.object(nltk, "download", side_effect=AssertionError("warm cache must work offline")):
+              assert VaderSentimentAnalyzer().score_text("golden duck, gone for nothing") < -0.5
+          PY
+      - run: uv run --no-sync pytest
+      - name: Replay match 74 without API keys
+        run: uv run --no-sync ipl-analyze analyze 74 --sentiment vader -o analysis-74.json
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run build
