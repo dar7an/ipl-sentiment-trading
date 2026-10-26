@@ -552,6 +552,7 @@ name = "ipl-sentiment-trading"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "certifi" },
     { name = "fastapi" },
     { name = "google-genai" },
     { name = "httpx" },
@@ -575,13 +576,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "google-genai", specifier = ">=1.0" },
     { name = "httpx", specifier = ">=0.27" },
-    { name = "nltk", specifier = ">=3.8" },
+    { name = "nltk", specifier = ">=3.10.4" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "python-dotenv", specifier = ">=1.2.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]

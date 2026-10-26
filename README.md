@@ -66,7 +66,7 @@ You need Python 3.11+ and Node 18+.
 
 ```bash
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/pytest                                  # all 36 tests run offline
+.venv/bin/pytest                                  # tests use no API keys
 .venv/bin/ipl-analyze analyze 74 --sentiment vader # works with zero API keys
 
 export TYPESAFE_API_KEY=...   # turns on Jev
@@ -74,11 +74,26 @@ export GEMINI_API_KEY=...     # turns on the commentary writer
 .venv/bin/ipl-analyze analyze 74 --sentiment jev --narrative
 .venv/bin/ipl-analyze eval 74 --sentiment jev      # Jev vs. baseline + cost report
 
-cd web && npm install && npm run build && cd ..   # build the UI once
+cd web && npm ci && npm run build && cd ..        # build the locked UI
 .venv/bin/ipl-ui              # open http://localhost:8000
 ```
 
 See `.env.example` for all the keys. Without keys everything still works — sentiment falls back to the offline VADER baseline and there's no commentary.
+
+VADER downloads its NLTK lexicon on first use. Run setup as the same user that
+runs the app. Set `NLTK_DATA` to an existing private directory if the default
+user data directory is unsuitable; do not use a shared writable directory.
+For a replay without API calls, unset `TYPESAFE_API_KEY`, `JEV_API_KEY`,
+`GEMINI_API_KEY`, and `GOOGLE_API_KEY`, and set `PYTHON_DOTENV_DISABLED=1` so a
+local `.env` cannot restore them. VADER mode can still call the Jev trade gate
+when a key is present.
+
+After pulling dependency updates, run `.venv/bin/pip install -e ".[dev]"`
+again and rebuild with `npm ci && npm run build` in `web/`. The package requires
+certifi 2026.10.19+ and NLTK 3.10.4+, so this also upgrades older pip installs.
+To reproduce the exact Python versions tested by CI, use `uv sync --locked`
+instead. A lockfile change alone does not update an existing environment.
+Restart the app only after the updated environment passes its checks.
 
 ## Words you might not know
 
