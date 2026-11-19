@@ -86,12 +86,8 @@ class CricketTracker:
         team = canonicalize_team(ball.name) or (ball.name or None)
         if team and team not in self.tallies:
             team = None  # keep stray names out of the two-team book
-        if team:
-            if self.innings == 0 or self.in_break or team != self.batting_team:
-                self._start_innings(team)
-            else:
-                self.batting_team = team
-                self.in_break = False
+        if team and (self.innings == 0 or self.in_break or team != self.batting_team):
+            self._start_innings(team)
         batting = self.batting_team
         if not batting or batting not in self.tallies:
             return
